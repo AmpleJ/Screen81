@@ -12,11 +12,11 @@
     body {
       margin: 0;
       font-family: 'Atkinson Hyperlegible', sans-serif;
-      background: url('https://www.transparenttextures.com/patterns/dark-fantasy.png');
+      background: url('https://www.transparenttextures.com/patterns/large-leather.png');
       display: flex;
       flex-direction: column;
       min-height: 100vh;
-      color: #000;
+      color: #140e04;
     }
     /* Header style */
     #tab-bar {
@@ -335,7 +335,6 @@
         <div id="canvas-${name}" class="canvas"></div>`;
       canvasContainer.appendChild(wrapper);
       
-      // Load any saved cards for this tab.
       loadState(name);
       saveTabs();
     }
@@ -419,15 +418,17 @@
       localStorage.setItem('dmTabs', JSON.stringify(newOrder));
     }
 
-    document.getElementById('new-tab').onclick = () => {
-      const name = prompt('Enter tab name:');
-      if (!name) return;
-      createTab(name);
-      switchTab(name);
-      saveTabs();
-    };
-
-    window.addEventListener('DOMContentLoaded', loadTabs);
+    // Attach New Tab button event after DOM is loaded.
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('new-tab').onclick = () => {
+        const name = prompt('Enter tab name:');
+        if (!name) return;
+        createTab(name);
+        switchTab(name);
+        saveTabs();
+      };
+      loadTabs();
+    });
 
     // --- CARD MANAGEMENT ---
     // Helper to update each input’s value and textarea’s content so the latest data is stored.
@@ -488,7 +489,6 @@
       addDragAndDrop(card);
       // Attach onblur for math inputs; non-math fields use oninput.
       card.querySelectorAll('.math-input').forEach(input => {
-        // Use evaluateMath on blur
         input.onblur = () => evaluateMath(input);
         input.setAttribute("ondragstart", "dragCell(event)");
         input.setAttribute("ondrop", "dropCell(event)");
@@ -577,8 +577,8 @@
       e.preventDefault();
     }
 
-    // Modified evaluateMath using math.js so that math expressions are evaluated,
-    // the result is displayed, and state is saved afterward.
+    // Evaluate math expressions using Math.js,
+    // set the result to the input field, then save state.
     function evaluateMath(input) {
       try {
         if (input.value.trim() === '') {
@@ -591,7 +591,6 @@
         console.error("Math evaluation error on input:", input.value, error);
         input.value = 0;
       }
-      // Save state after math is evaluated.
       saveState();
     }
 
@@ -710,7 +709,7 @@
       if (!currentTab) return;
       const canvas = document.getElementById('canvas-' + currentTab);
       if (canvas) {
-        // Update all form elements' attributes
+        // Update all form elements' attributes before saving
         canvas.querySelectorAll('.card').forEach(card => {
           updateFormElements(card);
         });
@@ -731,7 +730,6 @@
             input.setAttribute("ondrop", "dropCell(event)");
             input.setAttribute("ondragover", "allowDrop(event)");
           });
-          // For non-math inputs and textareas, use oninput to save changes immediately.
           card.querySelectorAll('input:not(.math-input), textarea, select').forEach(el => {
             el.oninput = () => saveState();
           });
