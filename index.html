@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>DM Screen v0.6.9.11 – Tabs</title>
-  <!-- Load Math.js library -->
+  <title>DM Screen v0.9.6.11</title>
+  <!-- Math.js Library (for offline use, download math.min.js and update this src) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.6.4/math.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible&display=swap" rel="stylesheet" />
   <style>
@@ -450,7 +450,7 @@
       card.id = `card-${idx}`;
       card.innerHTML = `
         <button class="close-btn" onclick="removeCard(this)">×</button>
-        <input type="text" placeholder="Name:" style="font-size:1.2rem" value="${data?.name || ''}"/>
+        <input type="text" placeholder="Name:" style="font-size:1.2rem" value="${data?.name || ''}" />
         <div style="display:flex; gap:.3rem; margin-bottom:.3rem;">
           <select onchange="updatePrimaryTheme(this)" aria-label="Primary Theme">
             ${themes.map(t => `<option value="${t.primary}" data-secondary="${t.secondary}">${t.name}</option>`).join('')}
@@ -574,23 +574,21 @@
       e.preventDefault();
     }
 
-    // Modified evaluateMath using math.js so that math expressions are evaluated and displayed.
+    // Modified evaluateMath using math.js so that math expressions are evaluated,
+    // the result is displayed, and state is saved afterward.
     function evaluateMath(input) {
       try {
-        console.log("Evaluating:", input.value);
         if (input.value.trim() === '') {
           input.value = 0;
         } else {
-          // Use math.evaluate from Math.js to calculate result.
           const result = math.evaluate(input.value);
-          console.log("Result:", result);
           input.value = result;
         }
       } catch (error) {
         console.error("Math evaluation error on input:", input.value, error);
         input.value = 0;
       }
-      // Ensure state is saved only after math is resolved.
+      // Save state after math is evaluated.
       saveState();
     }
 
