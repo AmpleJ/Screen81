@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>DM Screen v0.6.9.11 – Tabs</title>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Atkinson Hyperlegible', sans-serif;
+      background: url('https://www.transparenttextures.com/patterns/dark-fantasy.png');
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      color: #000;
+    }
+    /* Header style */
+    #tab-bar {
+      display: flex;
+      align-items: center;
+      background: #222;
+      padding: 0.3rem;
+      gap: 0.3rem;
+    }
+    #tab-bar button, .canvas-controls button {
+      background: #444;
+      color: #fff;
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #tab-bar button:hover, .canvas-controls button:hover {
+      background: #666;
+    }
+    /* Save button styling */
+    #save-button {
+      background: lightgray;
+      color: #000;
+    }
+    /* Tabs container */
+    #tabs {
+      display: flex;
+      gap: 0.25rem;
+      overflow-x: auto;
+    }
+    /* Folder-style tab button, renamable and draggable */
+    #tabs .tab-button {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: #444;
+      color: #fff;
+      padding: 0.3rem 0.6rem;
+      border-radius: 8px 8px 0 0;
+      border: 2px solid #888;
+      border-bottom: none;
+      position: relative;
+      top: 2px;
+      cursor: pointer;
+      user-select: none;
+    }
+    #tabs .tab-button.active {
+      background: #fff;
+      color: #000;
+      z-index: 2;
+    }
+    #tabs .tab-button .close-tab {
+      color: #ccc;
+      font-weight: bold;
+      cursor: pointer;
+      margin-left: 0.3rem;
+    }
+    /* Input style when renaming */
+    #tabs .tab-button input.rename-input {
+      background: #222;
+      color: #fff;
+      border: none;
+      font-size: 1rem;
+      width: 100px;
+    }
+    .canvas-wrapper {
+      display: none;
+      flex-direction: column;
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+    }
+    .canvas-wrapper.active {
+      display: flex;
+    }
+    .canvas-controls {
+      background: #fff;
+      padding: 0;
+      display: flex;
+      gap: 0;
+    }
+    .canvas {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 0.5rem;
+      padding: 0.5rem;
+      background: linear-gradient(to bottom, #333, #000);
+    }
+    .card {
+      background: linear-gradient(135deg, #000, #fff);
+      border: 3px ridge #000;
+      padding: 0.5rem;
+      resize: both;
+      overflow: auto;
+      position: relative;
+      cursor: move;
+      transition: transform 0.2s;
+      color: #fff;
+    }
+    .card:hover {
+      transform: scale(1.02);
+    }
+    .close-btn {
+      position: absolute;
+      top: 0.1rem;
+      right: 0.1rem;
+      width: 10px;
+      height: 10px;
+      border: none;
+      border-radius: 50%;
+      background: transparent;
+      font-weight: bold;
+      line-height: 10px;
+      text-align: center;
+      font-size: 0.7rem;
+      cursor: pointer;
+      padding: 0.1;
+    }
+    .card input, .card select, .card textarea {
+      width: 100%;
+      padding: 0.2rem;
+      margin-bottom: 0.2rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #fff;
+      color: #000;
+      text-align: center;
+    }
+    .card textarea {
+      resize: vertical;
+      text-align: left;
+    }
+    .card-controls {
+      display: flex;
+      justify-content: center;
+      gap: 0.2rem;
+      margin-bottom: 0.2rem;
+    }
+    .card-controls button {
+      border-radius: 4px;
+      border: none;
+      padding: 0.2rem 0.3rem;
+      cursor: pointer;
+    }
+    .card-header {
+      font-weight: bold;
+      font-size: 1.1rem;
+      margin-bottom: 0.3rem;
+    }
+    .cell-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .cell-buttons {
+      display: flex;
+      flex-direction: column;
+      margin-left: 0.2rem;
+    }
+    .cell-buttons button {
+      width: 0.6rem;
+      height: 0.6rem;
+      padding: 0;
+      margin: 1px 0;
+      font-size: 0.6rem;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      cursor: pointer;
+    }
+    .cell-buttons button:hover {
+      background: rgba(170, 170, 170, 1);
+    }
+    .cycle {
+      width: 1.2rem;
+      height: 1.2rem;
+      border: none;
+      border-radius: 50%;
+      background: linear-gradient(90deg, transparent, transparent);
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.24rem;
+    }
+    /* New CSS: Center table headers and make them look editable */
+    table th {
+      text-align: center;
+      font-weight: bold;
+      cursor: text;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header with Save, Add/Remove Card buttons, and New Tab -->
+  <div id="tab-bar">
+    <button id="save-button" onclick="saveState()">Save</button>
+    <button id="add-card-header" onclick="addCard()">Add Card</button>
+    <button id="remove-card-header" onclick="removeLastCard()">Remove Last Card</button>
+    <button id="new-tab">New Tab</button>
+    <div id="tabs"></div>
+  </div>
+  <div id="canvas-container" style="flex:1;position:relative;"></div>
+
+  <script>
+    // Global variables
+    let currentTab = null;
+    let cardCount = 0;
+    let draggedCard = null;
+
+    const tabs = document.getElementById('tabs');
+    const canvasContainer = document.getElementById('canvas-container');
+
+    const themes = [
+      {name: "High Fantasy", primary: "#fff", secondary: "#fff"},
+      {name: "Dark Fantasy", primary: "#000", secondary: "#000"},
+      {name: "Mystic Fog", primary: "#808080", secondary: "#c0c0c0"},
+      {name: "Celestial Moon", primary: "#fff", secondary: "#a8c0ff"},
+      {name: "Shadow Realm", primary: "#1B0A2A", secondary: "#B39DDB"},
+      {name: "Dragon's Blood", primary: "#8b0000", secondary: "#ff4d4d"},
+      {name: "Ruby Radiance", primary: "#ff0000", secondary: "#ffb3b3"},
+      {name: "Sunfire Blaze", primary: "#ff8c00", secondary: "#ffe0b2"},
+      {name: "Golden Dawn", primary: "#ffd700", secondary: "#fffacd"},
+      {name: "Enchanted Forest", primary: "#0B3D0B", secondary: "#a8d5ba"},
+      {name: "Emerald Dream", primary: "#50c878", secondary: "#b7e1cd"},
+      {name: "Frost Crystal", primary: "#00ced1", secondary: "#b2ffff"},
+      {name: "Oceanic Depths", primary: "#0000cd", secondary: "#89cff0"},
+      {name: "Twilight Violet", primary: "#8a2be2", secondary: "#d3a4ff"},
+      {name: "Mystic Amethyst", primary: "#800080", secondary: "#e0aaff"},
+      {name: "Living Earth", primary: "#5C4033", secondary: "#E6BE8A"},
+      {name: "Soft Tunic", primary: "#c4b799", secondary: "#f4f0d9"},
+      {name: "Faery Magic", primary: "#ECECFB", secondary: "#C0E8F9"},
+      {name: "Herbal Tincture", primary: "#D8E3C4", secondary: "#e4ddc4"},
+      {name: "Valiant Soul", primary: "#E5F6ED", secondary: "#F25C5C"},
+      {name: "Cryptic Scroll", primary: "#f4f0d9", secondary: "#a18973"},
+      {name: "Abyssal Horror", primary: "#1e1b2e", secondary: "#6e2f8d"},
+      {name: "Swamp Thing", primary: "#3b4d3a", secondary: "#7d9d68"},
+      {name: "Clockwork Golem", primary: "#d1bfa7", secondary: "#665e4d"},
+      {name: "Ghostbound", primary: "#cfd9e9", secondary: "#586175"},
+      {name: "Infernal Warden", primary: "#731717", secondary: "#e85a3b"},
+      {name: "Ice Revenant", primary: "#c0e8f9", secondary: "#4d7b94"},
+      {name: "Fungal Colossus", primary: "#c4b799", secondary: "#5d5a4b"},
+      {name: "Draconic Brood", primary: "#912121", secondary: "#f0c13d"},
+      {name: "Obsidian Stalker", primary: "#1a1a1a", secondary: "#4d4742"},
+      {name: "Stormcaller Djinn", primary: "#a6d5f7", secondary: "#295f87"},
+      {name: "Necrotic Sovereign", primary: "#3e3a39", secondary: "#94a27c"}
+    ];
+
+    // --- TAB MANAGEMENT ---
+    function saveTabs() {
+      const allTabs = [...tabs.children].map(btn => btn.dataset.name);
+      localStorage.setItem('dmTabs', JSON.stringify(allTabs));
+    }
+
+    function loadTabs() {
+      const saved = JSON.parse(localStorage.getItem('dmTabs') || '["Default"]');
+      saved.forEach(name => createTab(name));
+      switchTab(saved[0]);
+    }
+
+    function createTab(name) {
+      if (document.querySelector(`[data-name="${name}"]`)) return;
+      const btn = document.createElement('button');
+      btn.className = 'tab-button';
+      btn.dataset.name = name;
+      btn.draggable = true;
+      btn.innerHTML = `${name} <span class="close-tab" onclick="deleteTab(event, '${name}')">×</span>`;
+      // Single click to switch tabs.
+      btn.onclick = () => switchTab(name);
+      // Double-click to rename.
+      btn.ondblclick = (e) => {
+        e.stopPropagation();
+        const input = document.createElement('input');
+        input.value = name;
+        input.className = 'rename-input';
+        input.onblur = () => {
+          const newName = input.value.trim() || name;
+          renameTab(name, newName);
+        };
+        input.onkeydown = (e) => {
+          if (e.key === 'Enter') input.blur();
+        };
+        btn.innerHTML = '';
+        btn.appendChild(input);
+        input.focus();
+      };
+      // Drag events for tab reordering.
+      btn.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData("text/plain", btn.dataset.name);
+        btn.classList.add('dragging');
+      });
+      btn.addEventListener('dragend', () => {
+        btn.classList.remove('dragging');
+      });
+      btn.addEventListener('dragover', (e) => {
+        e.preventDefault();
+      });
+      btn.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const draggedName = e.dataTransfer.getData("text/plain");
+        if(draggedName === btn.dataset.name) return;
+        reorderTabs(draggedName, btn.dataset.name);
+      });
+      tabs.appendChild(btn);
+
+      // Create canvas wrapper for this tab.
+      const wrapper = document.createElement('div');
+      wrapper.id = 'wrap-' + name;
+      wrapper.className = 'canvas-wrapper';
+      wrapper.innerHTML = `
+        <div class="canvas-controls">
+          <!-- Controls moved to header -->
+        </div>
+        <div id="canvas-${name}" class="canvas"></div>`;
+      canvasContainer.appendChild(wrapper);
+      
+      // Load any saved cards for this tab.
+      loadState(name);
+      saveTabs();
+    }
+
+    function deleteTab(e, name) {
+      e.stopPropagation();
+      if (!confirm(`Delete tab "${name}"?`)) return;
+      document.querySelector(`[data-name="${name}"]`).remove();
+      document.getElementById('wrap-' + name).remove();
+      localStorage.removeItem('dmCards_' + name);
+      saveTabs();
+      const first = tabs.querySelector('.tab-button');
+      if (first) switchTab(first.dataset.name);
+    }
+
+    function switchTab(name) {
+      currentTab = name;
+      document.querySelectorAll('.tab-button').forEach(b => b.classList.toggle('active', b.dataset.name === name));
+      document.querySelectorAll('.canvas-wrapper').forEach(w => w.classList.toggle('active', w.id === 'wrap-' + name));
+    }
+
+    // Rename a tab (and update associated canvas and localStorage)
+    function renameTab(oldName, newName) {
+      if (oldName === newName) {
+        const btn = document.querySelector(`[data-name="${oldName}"]`);
+        if(btn){
+          btn.innerHTML = `${oldName} <span class="close-tab" onclick="deleteTab(event, '${oldName}')">×</span>`;
+        }
+        return;
+      }
+      const btn = document.querySelector(`[data-name="${oldName}"]`);
+      const wrapper = document.getElementById('wrap-' + oldName);
+      if (!btn || !wrapper) return;
+
+      btn.dataset.name = newName;
+      btn.innerHTML = `${newName} <span class="close-tab" onclick="deleteTab(event, '${newName}')">×</span>`;
+      btn.onclick = () => switchTab(newName);
+      btn.ondblclick = (e) => {
+        e.stopPropagation();
+        const input = document.createElement('input');
+        input.value = newName;
+        input.className = 'rename-input';
+        input.onblur = () => {
+          const finalName = input.value.trim() || newName;
+          renameTab(newName, finalName);
+        };
+        input.onkeydown = (e) => {
+          if (e.key === 'Enter') input.blur();
+        };
+        btn.innerHTML = '';
+        btn.appendChild(input);
+        input.focus();
+      };
+
+      wrapper.id = 'wrap-' + newName;
+      const innerCanvas = wrapper.querySelector('.canvas');
+      innerCanvas.id = 'canvas-' + newName;
+
+      const tabsData = JSON.parse(localStorage.getItem('dmTabs') || '[]');
+      const index = tabsData.indexOf(oldName);
+      if (index !== -1) tabsData[index] = newName;
+      localStorage.setItem('dmTabs', JSON.stringify(tabsData));
+
+      const data = localStorage.getItem('dmCards_' + oldName);
+      if (data) {
+        localStorage.setItem('dmCards_' + newName, data);
+        localStorage.removeItem('dmCards_' + oldName);
+      }
+      if (currentTab === oldName) currentTab = newName;
+    }
+
+    // Reorder tabs based on drag-and-drop.
+    function reorderTabs(draggedName, targetName) {
+      const allTabs = Array.from(tabs.children);
+      const draggedEl = allTabs.find(el => el.dataset.name === draggedName);
+      const targetEl = allTabs.find(el => el.dataset.name === targetName);
+      if (!draggedEl || !targetEl) return;
+      tabs.removeChild(draggedEl);
+      tabs.insertBefore(draggedEl, targetEl);
+      const newOrder = Array.from(tabs.children).map(el => el.dataset.name);
+      localStorage.setItem('dmTabs', JSON.stringify(newOrder));
+    }
+
+    document.getElementById('new-tab').onclick = () => {
+      const name = prompt('Enter tab name:');
+      if (!name) return;
+      createTab(name);
+      switchTab(name);
+      saveTabs();
+    };
+
+    window.addEventListener('DOMContentLoaded', loadTabs);
+
+    // --- CARD MANAGEMENT ---
+    // Helper to update each input’s value and textarea’s content so the latest data is stored.
+    function updateFormElements(container) {
+      container.querySelectorAll('input').forEach(el => {
+        el.setAttribute('value', el.value);
+      });
+      container.querySelectorAll('textarea').forEach(el => {
+        el.textContent = el.value;
+      });
+    }
+
+    // Create a card and attach blur event listeners so data is saved.
+    function addCard(data = null, pos = null) {
+      if (!currentTab) return;
+      const idx = cardCount++;
+      const card = document.createElement('article');
+      card.className = 'card';
+      card.draggable = true;
+      card.id = `card-${idx}`;
+      card.innerHTML = `
+        <button class="close-btn" onclick="removeCard(this)">×</button>
+        <input type="text" placeholder="Name:" style="font-size:1.2rem" value="${data?.name || ''}"/>
+        <div style="display:flex; gap:.3rem; margin-bottom:.3rem;">
+          <select onchange="updatePrimaryTheme(this)" aria-label="Primary Theme">
+            ${themes.map(t => `<option value="${t.primary}" data-secondary="${t.secondary}">${t.name}</option>`).join('')}
+          </select>
+          <button onclick="cycleTheme(this)" class="cycle">☼</button>
+          <select onchange="updateSecondaryTheme(this)" aria-label="Secondary Theme">
+            ${themes.map(t => `<option value="${t.secondary}" data-primary="${t.primary}">${t.name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="card-controls">
+          <button onclick="generateStats(this)">Generate Stats</button>
+          <button onclick="resetCard(this)">Reset Card</button>
+          <button onclick="resizeCard(this)">Resize Card</button>
+        </div>
+        ${makeSection('Stats', idx, ['STR','DEX','CON','INT','WIS','CHA'], 6, true, data)}
+        ${makeSection('Attributes', idx, ['HP','AC','DC','PP','Ammo','Charge'], 6, false, data)}
+        ${makeSpellSlots(idx, data)}
+        ${makeSection('Funds', idx, ['Platinum','Gold','Electrum','Silver','Copper'], 5, false, data)}
+        <label>Actions:</label><textarea>${data?.actions || ''}</textarea>
+        <label>Spells:</label><textarea>${data?.spells || ''}</textarea>
+        <label>Inventory:</label><textarea>${data?.inventory || ''}</textarea>
+        <label>Notes:</label><textarea>${data?.notes || ''}</textarea>
+      `;
+      const canvas = document.getElementById(`canvas-${currentTab}`);
+      if (!canvas) {
+        console.error(`Canvas for tab "${currentTab}" not found`);
+        return;
+      }
+      if (pos === null || pos >= canvas.children.length) {
+        canvas.append(card);
+      } else {
+        canvas.insertBefore(card, canvas.children[pos]);
+      }
+      addDragAndDrop(card);
+      // Attach blur listeners so that changes are saved when focus leaves.
+      card.querySelectorAll('input, textarea, select').forEach(el => {
+        el.onblur = () => saveState();
+      });
+      card.querySelectorAll('.math-input').forEach(input => {
+        input.setAttribute("ondragstart", "dragCell(event)");
+        input.setAttribute("ondrop", "dropCell(event)");
+        input.setAttribute("ondragover", "allowDrop(event)");
+      });
+      const primarySelect = card.querySelector('select:first-of-type');
+      const secondarySelect = card.querySelector('select:nth-of-type(2)');
+      if (data?.primaryIndex) primarySelect.selectedIndex = data.primaryIndex;
+      if (data?.secondaryIndex) secondarySelect.selectedIndex = data.secondaryIndex;
+      updatePrimaryTheme(primarySelect);
+      updateSecondaryTheme(secondarySelect);
+      saveState();
+      return card;
+    }
+
+    function removeCard(btn) {
+      btn.closest('.card').remove();
+      saveState();
+    }
+
+    function removeLastCard() {
+      const canvas = document.getElementById(`canvas-${currentTab}`);
+      if (!canvas) return;
+      if (canvas.lastChild) canvas.removeChild(canvas.lastChild);
+      saveState();
+    }
+
+    function resetCard(btn) {
+      const oldCard = btn.closest('.card');
+      const canvas = oldCard.parentElement;
+      const pos = Array.from(canvas.children).indexOf(oldCard);
+      oldCard.remove();
+      addCard(null, pos);
+      saveState();
+    }
+
+    function resizeCard(btn) {
+      const c = btn.closest('.card');
+      c.style.width = '';
+      c.style.height = '';
+    }
+
+    function changeCell(btn, delta) {
+      const inp = btn.closest('.cell-wrapper').querySelector('input');
+      let v = parseInt(inp.value) || 0;
+      inp.value = Math.max(0, v + delta);
+      saveState();
+    }
+
+    // Generate Stats with dice breakdown tooltip.
+  function generateStats(btn) {
+      const card = btn.closest('.card');
+      card.querySelectorAll('details:nth-of-type(1) input').forEach(i => {
+        const rolls = Array.from({length: 4}, () => Math.ceil(Math.random() * 6)).sort((a, b) => b - a);
+        const sum = rolls.slice(0, 3).reduce((a, b) => a + b, 0);
+        i.value = sum;
+        i.title = `${rolls[0]},${rolls[1]},${rolls[2]}(${rolls[3]})`;
+      });
+      saveState();
+    }
+
+    function dropCell(e) {
+      e.preventDefault();
+      const src = document.getElementById(e.dataTransfer.getData('id'));
+      const tgt = e.target.closest('input');
+      if (src && tgt) {
+        const tempVal = src.value;
+        const tempTitle = src.title;
+        src.value = tgt.value;
+        src.title = tgt.title;
+        tgt.value = tempVal;
+        tgt.title = tempTitle;
+        saveState();
+      }
+    }
+
+    function dragCell(e) {
+      e.dataTransfer.setData('text', e.target.value);
+      e.dataTransfer.setData('id', e.target.id);
+    }
+
+    function allowDrop(e) {
+      e.preventDefault();
+    }
+
+    // Modified evaluateMath: if field is blank or error occurs, set value to 0.
+
+    function evaluateMath(input) {
+      try {
+        if (/[+\-*\/()]/.test(input.value))
+          input.value = Function('"use strict"; return (' + input.value + ')')();
+      } catch {}
+      saveState();
+    }
+
+
+    function addDragAndDrop(card) {
+      card.addEventListener('dragstart', e => {
+        draggedCard = card;
+        card.style.opacity = '.5';
+      });
+      card.addEventListener('dragend', e => card.style.opacity = '1');
+      card.addEventListener('dragover', e => e.preventDefault());
+      card.addEventListener('drop', e => {
+        if (draggedCard && draggedCard !== card) {
+          const canvas = card.parentElement;
+          const nodes = [...canvas.children];
+          const from = nodes.indexOf(draggedCard);
+          const to = nodes.indexOf(card);
+          canvas.insertBefore(draggedCard, from < to ? card.nextSibling : card);
+          saveState();
+        }
+      });
+    }
+
+    // --- Section and Theme Helpers ---
+    function makeSection(title, idx, headers, count, open = false, data = null) {
+      return `
+        <details ${open ? 'open' : ''}>
+          <summary class="card-header" contenteditable="true" onblur="saveState()">${title}</summary>
+          <div class="card-content">
+            <table>
+              <tr>${headers.map(h => `<th contenteditable="true" onblur="saveState()">${h}</th>`).join('')}</tr>
+              <tr>${Array.from({length: count}, (_, i) => makeCell(idx, title, i, data)).join('')}</tr>
+            </table>
+          </div>
+        </details>`;
+    }
+
+    function makeCell(idx, section, i, data) {
+      const id = `${section}-${idx}-${i}`;
+      const val = data?.[id] ?? 0;
+      return `
+        <td>
+          <div class="cell-wrapper">
+            <input type="text" class="math-input" id="${id}" value="${val}"
+              onblur="evaluateMath(this)" draggable="true" ondragstart="dragCell(event)"
+              ondrop="dropCell(event)" ondragover="allowDrop(event)" title="Try 2+2" />
+            <div class="cell-buttons">
+              <button onclick="changeCell(this,1)">+</button>
+              <button onclick="changeCell(this,-1)">−</button>
+            </div>
+          </div>
+        </td>`;
+    }
+
+    function makeSpellSlots(idx, data) {
+      const labels = ['S', '1ˢᵗ', '2ⁿᵈ', '3ʳᵈ', '4ᵗʰ', '5ᵗʰ', '6ᵗʰ', '7ᵗʰ', '8ᵗʰ', '9ᵗʰ'];
+      return `
+        <details>
+          <summary class="card-header" contenteditable="true" onblur="saveState()">Spell Slots</summary>
+          <div class="card-content">
+            <table>
+              <tr>${labels.slice(0, 5).map(l => `<th contenteditable="true" onblur="saveState()">${l}</th>`).join('')}</tr>
+              <tr>${labels.slice(0, 5).map((_, i) => makeCell(idx, 'slot', i, data)).join('')}</tr>
+              <tr>${labels.slice(5).map(l => `<th contenteditable="true" onblur="saveState()">${l}</th>`).join('')}</tr>
+              <tr>${labels.slice(5).map((_, i) => makeCell(idx, 'slot', i + 5, data)).join('')}</tr>
+            </table>
+          </div>
+        </details>`;
+    }
+
+    // Update primary theme and update close/± button colors.
+    function updatePrimaryTheme(sel) {
+      const card = sel.closest('.card');
+      const idx = sel.selectedIndex;
+      const theme = themes[idx];
+      const bg = `linear-gradient(135deg,${theme.primary},${theme.secondary})`;
+      card.style.background = bg;
+      card.style.color = contrastColor(theme.primary);
+      const closeBtn = card.querySelector('.close-btn');
+      if (closeBtn) closeBtn.style.color = contrastColor(theme.primary);
+      card.querySelectorAll('.cell-buttons button').forEach(btn => {
+        btn.style.backgroundColor = 'transparent';
+        btn.style.color = contrastColor(theme.primary);
+      });
+    }
+
+    // Update secondary theme and update button/input colors.
+    function updateSecondaryTheme(sel) {
+      const card = sel.closest('.card');
+      const color = sel.value || '';
+      card.querySelectorAll('input,select,textarea,button:not(.close-btn)').forEach(el => {
+        el.style.backgroundColor = color;
+        el.style.borderColor = color;
+        el.style.color = contrastColor(color);
+      });
+    }
+
+    function cycleTheme(btn) {
+      const card = btn.closest('.card');
+      const p = card.querySelector('select:first-of-type');
+      const s = card.querySelector('select:nth-of-type(2)');
+      let idx = (p.selectedIndex + 1) % themes.length;
+      p.selectedIndex = s.selectedIndex = idx;
+      updatePrimaryTheme(p);
+      updateSecondaryTheme(s);
+    }
+
+    function contrastColor(hex) {
+      hex = hex.replace(/^#/, '');
+      if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+      const [r, g, b] = [0, 2, 4].map(i => parseInt(hex.substr(i, 2), 16));
+      return (r * 299 + g * 587 + b * 114) / 1000 < 128 ? '#fff' : '#000';
+    }
+
+    // --- STATE MANAGEMENT (PER TAB) ---
+    // Save state: update form element attributes then save innerHTML.
+    function saveState() {
+      if (!currentTab) return;
+      const canvas = document.getElementById('canvas-' + currentTab);
+      if (canvas) {
+        canvas.querySelectorAll('.card').forEach(card => {
+          updateFormElements(card);
+        });
+        localStorage.setItem('dmCards_' + currentTab, canvas.innerHTML);
+      }
+    }
+
+    // Load saved state and reattach event listeners.
+    function loadState(tabName) {
+      const saved = localStorage.getItem('dmCards_' + tabName);
+      if (saved) {
+        const canvas = document.getElementById('canvas-' + tabName);
+        canvas.innerHTML = saved;
+        canvas.querySelectorAll('.card').forEach(card => {
+          addDragAndDrop(card);
+          card.querySelectorAll('.math-input').forEach(input => {
+            input.setAttribute("ondragstart", "dragCell(event)");
+            input.setAttribute("ondrop", "dropCell(event)");
+            input.setAttribute("ondragover", "allowDrop(event)");
+          });
+          card.querySelectorAll('input, textarea, select').forEach(el => {
+            el.onblur = () => saveState();
+          });
+        });
+      }
+    }
+  </script>
+</body>
+</html>
