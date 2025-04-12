@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>DM Screen v0.9.6.11</title>
-  <!-- Math.js Library (for offline use, download math.min.js and update this src) -->
+  <title>DM Screen v0.6.9.11 – Tabs</title>
+  <!-- Load Math.js library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.6.4/math.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible&display=swap" rel="stylesheet" />
   <style>
@@ -12,11 +12,11 @@
     body {
       margin: 0;
       font-family: 'Atkinson Hyperlegible', sans-serif;
-      background: url('https://www.transparenttextures.com/patterns/dark-fantasy.png');
+      background: url('https://www.transparenttextures.com/patterns/large-leather.png');
       display: flex;
       flex-direction: column;
       min-height: 100vh;
-      color: #000;
+      color: #140e04;
     }
     /* Header style */
     #tab-bar {
@@ -335,14 +335,15 @@
         <div id="canvas-${name}" class="canvas"></div>`;
       canvasContainer.appendChild(wrapper);
       
+      // Load any saved cards for this tab.
       loadState(name);
       saveTabs();
     }
 
     function deleteTab(e, name) {
       e.stopPropagation();
-      if (!confirm(\`Delete tab "\${name}"?\`)) return;
-      document.querySelector(\`[data-name="\${name}"]\`).remove();
+      if (!confirm(`Delete tab "${name}"?`)) return;
+      document.querySelector(`[data-name="${name}"]`).remove();
       document.getElementById('wrap-' + name).remove();
       localStorage.removeItem('dmCards_' + name);
       saveTabs();
@@ -359,18 +360,18 @@
     // Rename a tab (and update associated canvas and localStorage)
     function renameTab(oldName, newName) {
       if (oldName === newName) {
-        const btn = document.querySelector(\`[data-name="\${oldName}"]\`);
+        const btn = document.querySelector(`[data-name="${oldName}"]`);
         if(btn){
-          btn.innerHTML = \`\${oldName} <span class="close-tab" onclick="deleteTab(event, '\${oldName}')">×</span>\`;
+          btn.innerHTML = `${oldName} <span class="close-tab" onclick="deleteTab(event, '${oldName}')">×</span>`;
         }
         return;
       }
-      const btn = document.querySelector(\`[data-name="\${oldName}"]\`);
+      const btn = document.querySelector(`[data-name="${oldName}"]`);
       const wrapper = document.getElementById('wrap-' + oldName);
       if (!btn || !wrapper) return;
 
       btn.dataset.name = newName;
-      btn.innerHTML = \`\${newName} <span class="close-tab" onclick="deleteTab(event, '\${newName}')">×</span>\`;
+      btn.innerHTML = `${newName} <span class="close-tab" onclick="deleteTab(event, '${newName}')">×</span>`;
       btn.onclick = () => switchTab(newName);
       btn.ondblclick = (e) => {
         e.stopPropagation();
@@ -418,7 +419,7 @@
       localStorage.setItem('dmTabs', JSON.stringify(newOrder));
     }
 
-document.getElementById('new-tab').onclick = () => {
+    document.getElementById('new-tab').onclick = () => {
       const name = prompt('Enter tab name:');
       if (!name) return;
       createTab(name);
@@ -439,7 +440,7 @@ document.getElementById('new-tab').onclick = () => {
       });
     }
 
-    // Create a card and attach event listeners so that changes are saved.
+    // Create a card and attach blur event listeners so data is saved.
     function addCard(data = null, pos = null) {
       if (!currentTab) return;
       const idx = cardCount++;
@@ -449,7 +450,7 @@ document.getElementById('new-tab').onclick = () => {
       card.id = `card-${idx}`;
       card.innerHTML = `
         <button class="close-btn" onclick="removeCard(this)">×</button>
-        <input type="text" placeholder="Name:" style="font-size:1.2rem" value="${data?.name || ''}" />
+        <input type="text" placeholder="Name:" style="font-size:1.2rem" value="${data?.name || ''}"/>
         <div style="display:flex; gap:.3rem; margin-bottom:.3rem;">
           <select onchange="updatePrimaryTheme(this)" aria-label="Primary Theme">
             ${themes.map(t => `<option value="${t.primary}" data-secondary="${t.secondary}">${t.name}</option>`).join('')}
@@ -459,7 +460,6 @@ document.getElementById('new-tab').onclick = () => {
             ${themes.map(t => `<option value="${t.secondary}" data-primary="${t.primary}">${t.name}</option>`).join('')}
           </select>
         </div>
-        <!-- Card control buttons -->
         <div class="card-controls">
           <button onclick="generateStats(this)">Generate Stats</button>
           <button onclick="resetCard(this)">Reset Card</button>
@@ -485,15 +485,14 @@ document.getElementById('new-tab').onclick = () => {
         canvas.insertBefore(card, canvas.children[pos]);
       }
       addDragAndDrop(card);
-      // Attach onblur for math inputs; non-math fields use oninput.
+      // Attach blur listeners so that changes are saved when focus leaves.
+      card.querySelectorAll('input, textarea, select').forEach(el => {
+        el.onblur = () => saveState();
+      });
       card.querySelectorAll('.math-input').forEach(input => {
-        input.onblur = () => evaluateMath(input);
         input.setAttribute("ondragstart", "dragCell(event)");
         input.setAttribute("ondrop", "dropCell(event)");
         input.setAttribute("ondragover", "allowDrop(event)");
-      });
-      card.querySelectorAll('input:not(.math-input), textarea, select').forEach(el => {
-        el.oninput = () => saveState();
       });
       const primarySelect = card.querySelector('select:first-of-type');
       const secondarySelect = card.querySelector('select:nth-of-type(2)');
@@ -575,19 +574,23 @@ document.getElementById('new-tab').onclick = () => {
       e.preventDefault();
     }
 
-    // Evaluate math expressions using Math.js, set result to input, then save state.
+    // Modified evaluateMath using math.js so that math expressions are evaluated and displayed.
     function evaluateMath(input) {
       try {
+        console.log("Evaluating:", input.value);
         if (input.value.trim() === '') {
           input.value = 0;
         } else {
+          // Use math.evaluate from Math.js to calculate result.
           const result = math.evaluate(input.value);
+          console.log("Result:", result);
           input.value = result;
         }
       } catch (error) {
         console.error("Math evaluation error on input:", input.value, error);
         input.value = 0;
       }
+      // Ensure state is saved only after math is resolved.
       saveState();
     }
 
@@ -702,11 +705,11 @@ document.getElementById('new-tab').onclick = () => {
     }
 
     // --- STATE MANAGEMENT (PER TAB) ---
+    // Save state: update all form elements then save innerHTML.
     function saveState() {
       if (!currentTab) return;
       const canvas = document.getElementById('canvas-' + currentTab);
       if (canvas) {
-        // Update all form elements' attributes before saving
         canvas.querySelectorAll('.card').forEach(card => {
           updateFormElements(card);
         });
@@ -714,6 +717,7 @@ document.getElementById('new-tab').onclick = () => {
       }
     }
 
+    // Load saved state and reattach event listeners.
     function loadState(tabName) {
       const saved = localStorage.getItem('dmCards_' + tabName);
       if (saved) {
@@ -722,18 +726,18 @@ document.getElementById('new-tab').onclick = () => {
         canvas.querySelectorAll('.card').forEach(card => {
           addDragAndDrop(card);
           card.querySelectorAll('.math-input').forEach(input => {
-            input.onblur = () => evaluateMath(input);
             input.setAttribute("ondragstart", "dragCell(event)");
             input.setAttribute("ondrop", "dropCell(event)");
             input.setAttribute("ondragover", "allowDrop(event)");
           });
-          card.querySelectorAll('input:not(.math-input), textarea, select').forEach(el => {
-            el.oninput = () => saveState();
+          card.querySelectorAll('input, textarea, select').forEach(el => {
+            el.onblur = () => saveState();
           });
         });
       }
     }
 
+    // --- Helper: Update form elements so that innerHTML contains the latest data.
     function updateFormElements(container) {
       container.querySelectorAll('input').forEach(el => {
         el.setAttribute('value', el.value);
