@@ -12,11 +12,11 @@
     body {
       margin: 0;
       font-family: 'Atkinson Hyperlegible', sans-serif;
-      background: url('https://www.transparenttextures.com/patterns/large-leather.png');
+      background: url('https://www.transparenttextures.com/patterns/dark-fantasy.png');
       display: flex;
       flex-direction: column;
       min-height: 100vh;
-      color: #140e04;
+      color: #000;
     }
     /* Header style */
     #tab-bar {
@@ -418,8 +418,9 @@
       localStorage.setItem('dmTabs', JSON.stringify(newOrder));
     }
 
-    // Attach New Tab button event after DOM is loaded.
+    // --- NEW TAB EVENT BINDING ---
     document.addEventListener('DOMContentLoaded', () => {
+      // Bind new-tab button event
       document.getElementById('new-tab').onclick = () => {
         const name = prompt('Enter tab name:');
         if (!name) return;
@@ -577,8 +578,7 @@
       e.preventDefault();
     }
 
-    // Evaluate math expressions using Math.js,
-    // set the result to the input field, then save state.
+    // Evaluate math expressions using Math.js, set result to input, then save state.
     function evaluateMath(input) {
       try {
         if (input.value.trim() === '') {
