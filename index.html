@@ -12,11 +12,11 @@
     body {
       margin: 0;
       font-family: 'Atkinson Hyperlegible', sans-serif;
-      background: url('https://www.transparenttextures.com/patterns/large-leather.png');
+      background: url('https://www.transparenttextures.com/patterns/dark-fantasy.png');
       display: flex;
       flex-direction: column;
       min-height: 100vh;
-      color: #211207;
+      color: #000;
     }
     /* Header style */
     #tab-bar {
@@ -104,8 +104,7 @@
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 0.5rem;
       padding: 0.5rem;
-      background: url('https://www.transparenttextures.com/patterns/dark-fantasy.png');
-      color: linear-gradient(to bottom, #333, #000);
+      background: linear-gradient(to bottom, #333, #000);
     }
     .card {
       background: linear-gradient(135deg, #000, #fff);
@@ -214,9 +213,8 @@
   </style>
 </head>
 <body>
-  <!-- Header with Save, Add/Remove Card buttons, and New Tab -->
+  <!-- Header with Add/Remove Card buttons -->
   <div id="tab-bar">
-    <button id="save-button" onclick="saveState()">Save</button>
     <button id="add-card-header" onclick="addCard()">Add Card</button>
     <button id="remove-card-header" onclick="removeLastCard()">Remove Last Card</button>
     <button id="new-tab">New Tab</button>
@@ -336,7 +334,6 @@
         <div id="canvas-${name}" class="canvas"></div>`;
       canvasContainer.appendChild(wrapper);
       
-      // Load any saved cards for this tab.
       loadState(name);
       saveTabs();
     }
@@ -461,6 +458,7 @@
             ${themes.map(t => `<option value="${t.secondary}" data-primary="${t.primary}">${t.name}</option>`).join('')}
           </select>
         </div>
+        <!-- Card control buttons -->
         <div class="card-controls">
           <button onclick="generateStats(this)">Generate Stats</button>
           <button onclick="resetCard(this)">Reset Card</button>
@@ -486,10 +484,11 @@
         canvas.insertBefore(card, canvas.children[pos]);
       }
       addDragAndDrop(card);
-      // Attach blur listeners so that changes are saved when focus leaves.
+      // Attach oninput listeners to persist data as it changes.
       card.querySelectorAll('input, textarea, select').forEach(el => {
-        el.onblur = () => saveState();
+        el.oninput = () => saveState();
       });
+      // Reattach drag events for math inputs.
       card.querySelectorAll('.math-input').forEach(input => {
         input.setAttribute("ondragstart", "dragCell(event)");
         input.setAttribute("ondrop", "dropCell(event)");
@@ -579,19 +578,18 @@
     // the result is displayed, and state is saved afterward.
     function evaluateMath(input) {
       try {
-        console.log("Evaluating input:", input.value);
-        if (input.value.trim() === '') {
-          input.value = 0;
-        } else {
+        // If the value is not empty, evaluate the expression.
+        if (input.value.trim() !== '') {
           const result = math.evaluate(input.value);
-          console.log("Evaluated result:", result);
           input.value = result;
+        } else {
+          input.value = 0;
         }
       } catch (error) {
         console.error("Math evaluation error on input:", input.value, error);
         input.value = 0;
       }
-      // Save state only after math is evaluated.
+      // Save state after math is evaluated.
       saveState();
     }
 
@@ -711,9 +709,6 @@
       if (!currentTab) return;
       const canvas = document.getElementById('canvas-' + currentTab);
       if (canvas) {
-        canvas.querySelectorAll('.card').forEach(card => {
-          updateFormElements(card);
-        });
         localStorage.setItem('dmCards_' + currentTab, canvas.innerHTML);
       }
     }
@@ -731,8 +726,9 @@
             input.setAttribute("ondrop", "dropCell(event)");
             input.setAttribute("ondragover", "allowDrop(event)");
           });
+          // Reattach input event listeners.
           card.querySelectorAll('input, textarea, select').forEach(el => {
-            el.onblur = () => saveState();
+            el.oninput = () => saveState();
           });
         });
       }
