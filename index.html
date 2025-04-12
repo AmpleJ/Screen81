@@ -418,18 +418,15 @@
       localStorage.setItem('dmTabs', JSON.stringify(newOrder));
     }
 
-    // --- NEW TAB EVENT BINDING ---
-    document.addEventListener('DOMContentLoaded', () => {
-      // Bind new-tab button event
-      document.getElementById('new-tab').onclick = () => {
-        const name = prompt('Enter tab name:');
-        if (!name) return;
-        createTab(name);
-        switchTab(name);
-        saveTabs();
-      };
-      loadTabs();
-    });
+document.getElementById('new-tab').onclick = () => {
+      const name = prompt('Enter tab name:');
+      if (!name) return;
+      createTab(name);
+      switchTab(name);
+      saveTabs();
+    };
+
+    window.addEventListener('DOMContentLoaded', loadTabs);
 
     // --- CARD MANAGEMENT ---
     // Helper to update each input’s value and textarea’s content so the latest data is stored.
