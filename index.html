@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>DM Screen v0.6.9.11 – Tabs</title>
+  <!-- Load Math.js library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.6.4/math.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; }
@@ -317,7 +319,7 @@
       btn.addEventListener('drop', (e) => {
         e.preventDefault();
         const draggedName = e.dataTransfer.getData("text/plain");
-        if(draggedName === btn.dataset.name) return;
+        if (draggedName === btn.dataset.name) return;
         reorderTabs(draggedName, btn.dataset.name);
       });
       tabs.appendChild(btn);
@@ -537,7 +539,7 @@
     }
 
     // Generate Stats with dice breakdown tooltip.
-  function generateStats(btn) {
+    function generateStats(btn) {
       const card = btn.closest('.card');
       card.querySelectorAll('details:nth-of-type(1) input').forEach(i => {
         const rolls = Array.from({length: 4}, () => Math.ceil(Math.random() * 6)).sort((a, b) => b - a);
@@ -572,16 +574,25 @@
       e.preventDefault();
     }
 
-    // Modified evaluateMath: if field is blank or error occurs, set value to 0.
-
+    // Modified evaluateMath using math.js so that math expressions are evaluated and displayed.
     function evaluateMath(input) {
       try {
-        if (/[+\-*\/()]/.test(input.value))
-          input.value = Function('"use strict"; return (' + input.value + ')')();
-      } catch {}
+        console.log("Evaluating:", input.value);
+        if (input.value.trim() === '') {
+          input.value = 0;
+        } else {
+          // Use math.evaluate from Math.js to calculate result.
+          const result = math.evaluate(input.value);
+          console.log("Result:", result);
+          input.value = result;
+        }
+      } catch (error) {
+        console.error("Math evaluation error on input:", input.value, error);
+        input.value = 0;
+      }
+      // Ensure state is saved only after math is resolved.
       saveState();
     }
-
 
     function addDragAndDrop(card) {
       card.addEventListener('dragstart', e => {
@@ -623,8 +634,8 @@
         <td>
           <div class="cell-wrapper">
             <input type="text" class="math-input" id="${id}" value="${val}"
-              onblur="evaluateMath(this)" draggable="true" ondragstart="dragCell(event)"
-              ondrop="dropCell(event)" ondragover="allowDrop(event)" title="Try 2+2" />
+              onblur="evaluateMath(this)" draggable="true" ondragstart="dragCell(event)" ondrop="dropCell(event)" ondragover="allowDrop(event)"
+              title="Try 2+2"/>
             <div class="cell-buttons">
               <button onclick="changeCell(this,1)">+</button>
               <button onclick="changeCell(this,-1)">−</button>
@@ -694,7 +705,7 @@
     }
 
     // --- STATE MANAGEMENT (PER TAB) ---
-    // Save state: update form element attributes then save innerHTML.
+    // Save state: update all form elements then save innerHTML.
     function saveState() {
       if (!currentTab) return;
       const canvas = document.getElementById('canvas-' + currentTab);
@@ -724,6 +735,16 @@
           });
         });
       }
+    }
+
+    // --- Helper: Update form elements so that innerHTML contains the latest data.
+    function updateFormElements(container) {
+      container.querySelectorAll('input').forEach(el => {
+        el.setAttribute('value', el.value);
+      });
+      container.querySelectorAll('textarea').forEach(el => {
+        el.textContent = el.value;
+      });
     }
   </script>
 </body>
