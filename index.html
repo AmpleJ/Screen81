@@ -39,15 +39,34 @@
     }
     /* Save button styling */
     #save-button {
-      background: lightgray;
-      color: #000;
-    }
+  background: lightgray;
+  color: #000;
+  transition: background 0.3s, content 0.3s;
+  position: relative;
+  padding: 0.4rem 1rem;
+}
+
+#save-button.clicked {
+  background: yellow;
+}
+
+/* Optional: smooth transition for content */
+#save-button .checkmark {
+  display: none;
+  margin-left: 0.5rem;
+}
+
+#save-button.clicked .checkmark {
+  display: inline;
+}
+
     /* Tabs container */
     #tabs {
       display: flex;
-      gap: 0.25rem;
-      overflow-x: auto;
-    }
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  overflow: hidden; /* hides scrollbars */
+}
     /* Folder-style tab button, renamable and draggable */
     #tabs .tab-button {
       display: flex;
@@ -55,7 +74,7 @@
       gap: 0.3rem;
       background: #444;
       color: #fff;
-      padding: 0.3rem 0.6rem;
+      padding: 0.2rem 0.4rem;
       border-radius: 8px 8px 0 0;
       border: 2px solid #888;
       border-bottom: none;
@@ -236,35 +255,57 @@
       {name: "High Fantasy", primary: "#fff", secondary: "#fff"},
       {name: "Dark Fantasy", primary: "#000", secondary: "#000"},
       {name: "Mystic Fog", primary: "#808080", secondary: "#c0c0c0"},
-      {name: "Celestial Moon", primary: "#fff", secondary: "#a8c0ff"},
-      {name: "Shadow Realm", primary: "#1B0A2A", secondary: "#B39DDB"},
+        {name: "Ghostbound", primary: "#cfd9e9", secondary: "#586175"},
+{name: "Rustic Copper", primary: "#B87333", secondary: "#8B4513"},
       {name: "Dragon's Blood", primary: "#8b0000", secondary: "#ff4d4d"},
       {name: "Ruby Radiance", primary: "#ff0000", secondary: "#ffb3b3"},
+	{name: "Infernal Warden", primary: "#731717", secondary: "#e85a3b"},
+	{name: "Valiant Soul", primary: "#E5F6ED", secondary: "#F25C5C"},
+	{name: "Draconic Brood", primary: "#912121", secondary: "#f0c13d"},
       {name: "Sunfire Blaze", primary: "#ff8c00", secondary: "#ffe0b2"},
       {name: "Golden Dawn", primary: "#ffd700", secondary: "#fffacd"},
+{name: "Electric Lime", primary: "#CCFF00", secondary: "#99CC00"},
+{name: "Jade Forest", primary: "#2E8B57", secondary: "#98FB98"},
       {name: "Enchanted Forest", primary: "#0B3D0B", secondary: "#a8d5ba"},
       {name: "Emerald Dream", primary: "#50c878", secondary: "#b7e1cd"},
+	{name: "Swamp Beast", primary: "#3b4d3a", secondary: "#7d9d68"},
+	{name: "Necrotic Sovereign", primary: "#3e3a39", secondary: "#94a27c"},
+{name: "Deep Horizon", primary: "#2F4F4F", secondary: "#708090"},
+	{name: "Ice Revenant", primary: "#c0e8f9", secondary: "#4d7b94"},
+	{name: "Celestial Moon", primary: "#fff", secondary: "#a8c0ff"},
+	{name: "Faery Magic", primary: "#ECECFB", secondary: "#C0E8F9"},
       {name: "Frost Crystal", primary: "#00ced1", secondary: "#b2ffff"},
+{name: "Arctic Ice", primary: "#E0F7FA", secondary: "#00ACC1"},
+{name: "Vibrant Teal", primary: "#008080", secondary: "#00FFFF"},
       {name: "Oceanic Depths", primary: "#0000cd", secondary: "#89cff0"},
+	{name: "Stormcaller Djinn", primary: "#a6d5f7", secondary: "#295f87"},
+{name: "Midnight Orchid", primary: "#330066", secondary: "#9933FF"},
       {name: "Twilight Violet", primary: "#8a2be2", secondary: "#d3a4ff"},
       {name: "Mystic Amethyst", primary: "#800080", secondary: "#e0aaff"},
-      {name: "Living Earth", primary: "#5C4033", secondary: "#E6BE8A"},
+	{name: "Abyssal Horror", primary: "#1e1b2e", secondary: "#6e2f8d"},
+	{name: "Shadow Realm", primary: "#1B0A2A", secondary: "#B39DDB"},
+        {name: "Herbal Tincture", primary: "#D8E3C4", secondary: "#e4ddc4"},
       {name: "Soft Tunic", primary: "#c4b799", secondary: "#f4f0d9"},
-      {name: "Faery Magic", primary: "#ECECFB", secondary: "#C0E8F9"},
-      {name: "Herbal Tincture", primary: "#D8E3C4", secondary: "#e4ddc4"},
-      {name: "Valiant Soul", primary: "#E5F6ED", secondary: "#F25C5C"},
-      {name: "Cryptic Scroll", primary: "#f4f0d9", secondary: "#a18973"},
-      {name: "Abyssal Horror", primary: "#1e1b2e", secondary: "#6e2f8d"},
-      {name: "Swamp Thing", primary: "#3b4d3a", secondary: "#7d9d68"},
+{name: "Cosmic Latte", primary: "#FFF8E7", secondary: "#E0C097"},
+      {name: "Living Earth", primary: "#5C4033", secondary: "#E6BE8A"},
+      {name: "Cryptic Scroll", primary: "#f4f0d9", secondary: "#a18973"},     
       {name: "Clockwork Golem", primary: "#d1bfa7", secondary: "#665e4d"},
-      {name: "Ghostbound", primary: "#cfd9e9", secondary: "#586175"},
-      {name: "Infernal Warden", primary: "#731717", secondary: "#e85a3b"},
-      {name: "Ice Revenant", primary: "#c0e8f9", secondary: "#4d7b94"},
-      {name: "Fungal Colossus", primary: "#c4b799", secondary: "#5d5a4b"},
-      {name: "Draconic Brood", primary: "#912121", secondary: "#f0c13d"},
+      {name: "Fungal Colossus", primary: "#503D2E", secondary: "#5d5a4b"},
       {name: "Obsidian Stalker", primary: "#1a1a1a", secondary: "#4d4742"},
-      {name: "Stormcaller Djinn", primary: "#a6d5f7", secondary: "#295f87"},
-      {name: "Necrotic Sovereign", primary: "#3e3a39", secondary: "#94a27c"}
+{name: "Solar Flare", primary: "#FF7F00", secondary: "#007FFF"},
+{name: "Emerald Ruby", primary: "#009B77", secondary: "#FF6F61"},
+{name: "Royal Velvet", primary: "#663399", secondary: "#FFD700"},
+{name: "Crimson Ice", primary: "#DC143C", secondary: "#00CED1"},
+{name: "Violet Surge", primary: "#9400D3", secondary: "#ADFF2F"},
+{name: "Tropical Tide", primary: "#FF6347", secondary: "#4682B4"},
+{name: "Mystic Maroon", primary: "#800000", secondary: "#00FF7F"},
+{name: "Deep Sea", primary: "#000080", secondary: "#FFFF00"},
+{name: "Peachy Keen", primary: "#FFDAB9", secondary: "#6495ED"},
+{name: "Autumn Grove", primary: "#D2691E", secondary: "#87CEEB"},
+{name: "Electric Orchid", primary: "#DA70D6", secondary: "#98FB98"},
+{name: "Golden Frost", primary: "#FFD700", secondary: "#00FFFF"},
+{name: "Midnight Blossom", primary: "#191970", secondary: "#FF69B4"},
+      {name: "Utimate Power", primary: "#FF3D7F", secondary: "#FF9E9D"}
     ];
 
     // --- TAB MANAGEMENT ---
@@ -751,6 +792,22 @@
         el.textContent = el.value;
       });
     }
+const saveButton = document.getElementById("save-button");
+
+saveButton.addEventListener("click", () => {
+  saveButton.classList.add("clicked");
+
+  // Change text to include checkmark
+  const originalText = "💾 Save";
+  saveButton.innerHTML = `${originalText}<span class="checkmark">✅</span>`;
+
+  // Optional: Reset after 1.5 seconds
+  setTimeout(() => {
+    saveButton.classList.remove("clicked");
+    saveButton.innerHTML = originalText;
+  }, 1500);
+});
+
   </script>
 </body>
 </html>
