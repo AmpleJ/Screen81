@@ -346,7 +346,11 @@
   </div>
   
   <!-- Canvas container for tabs/cards remains unchanged -->
-  <div id="canvas-container" style="flex:1;position:relative;"></div>
+  <div id="canvas-container" style="flex:1;position:relative;">
+  <div id="intro-text" style="text-align: center; padding: 1rem; color: white;">
+    <h2>Dynamic GM Screen</h2>
+    <p>Press New Tab then Add Card to get started.</p>
+  </div>
   
   <!-- Original Script for tabs/cards, state management, etc. -->
   <script>
@@ -1011,8 +1015,18 @@
       updateBackground(this.value);
     });
     
-    function updateBackground(url) {
-      localStorage.setItem('backgroundUrl', url);
+function updateBackground(url) {
+  localStorage.setItem('backgroundUrl', url);
+
+  // Handle the intro text correctly
+  const intro = document.getElementById('intro-text');
+  if (intro) {
+    if (!url || url === "" || url === "@@@custom") {
+      intro.style.display = "block";
+    } else {
+      intro.style.display = "none";
+    }
+  }
       if (!url) {
         backgroundImage.style.display = 'none';
         backgroundVideoEl.style.display = 'none';
