@@ -3,22 +3,46 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>DM Screen v0.9.9.1</title>
-  <!-- Load Math.js library (for offline use, download math.min.js and update this src) -->
+  <title>DM Screen v0.6.9.11 – Tabs</title>
+  <!-- Load Math.js library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.6.4/math.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible&display=swap" rel="stylesheet" />
   <style>
+    /* Global resets */
     *, *::before, *::after { box-sizing: border-box; }
+    
+    /* Body: Removed original patterned background */
     body {
       margin: 0;
       font-family: 'Atkinson Hyperlegible', sans-serif;
-      background: url('https://www.transparenttextures.com/patterns/large-leather.png');
+      background: linear-gradient(to bottom, #333, #000);
       display: flex;
       flex-direction: column;
       min-height: 100vh;
       color: #140e04;
     }
-    /* Header style */
+    
+    /* Background Container for Video/Image Background */
+    #backgroundContainer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: -10;
+      overflow: hidden;
+    }
+    #backgroundImage {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+    
+    /* Original header (tab-bar) styling */
     #tab-bar {
       display: flex;
       align-items: center;
@@ -37,36 +61,74 @@
     #tab-bar button:hover, .canvas-controls button:hover {
       background: #666;
     }
+    
     /* Save button styling */
     #save-button {
-  background: lightgray;
-  color: #000;
-  transition: background 0.3s, content 0.3s;
-  position: relative;
-  padding: 0.4rem 1rem;
-}
-
-#save-button.clicked {
-  background: yellow;
-}
-
-/* Optional: smooth transition for content */
-#save-button .checkmark {
-  display: none;
-  margin-left: 0.5rem;
-}
-
-#save-button.clicked .checkmark {
-  display: inline;
-}
-
+      background: lightgray;
+      color: #000;
+      transition: background 0.3s, content 0.3s;
+      position: relative;
+      padding: 0.4rem 1rem;
+    }
+    #save-button.clicked {
+      background: yellow;
+    }
+    #save-button .checkmark {
+      display: none;
+      margin-left: 0.5rem;
+    }
+    #save-button.clicked .checkmark {
+      display: inline;
+    }
+    
+    /* Background Menu Styling (inserted into the header) */
+    #background-menu {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-right: 8px;
+    }
+    #background-menu .header-title {
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: #fff;
+    }
+    #background-menu .background-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    #background-menu select {
+      padding: 2px 4px;
+      border-radius: 2px;
+      border: 1px solid #ccc;
+      background-color: #fff;
+      color: #333;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    #background-menu input {
+      display: none;
+      margin-top: 12px;
+      padding: 8px;
+      width: 100%;
+      max-width: 300px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      background-color: #fff;
+      color: #333;
+    }
+    
+    /* The remainder of your CSS (for tabs, cards, etc.) remains unchanged */
     /* Tabs container */
     #tabs {
       display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-  overflow: hidden; /* hides scrollbars */
-}
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      overflow: hidden; /* hides scrollbars */
+    }
     /* Folder-style tab button, renamable and draggable */
     #tabs .tab-button {
       display: flex;
@@ -123,7 +185,7 @@
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 0.5rem;
       padding: 0.5rem;
-      background: linear-gradient(to bottom, #333, #000);
+      background: none;
     }
     .card {
       background: linear-gradient(135deg, #000, #fff);
@@ -223,7 +285,7 @@
       justify-content: center;
       font-size: 1.24rem;
     }
-    /* New CSS: Center table headers and make them look editable */
+    /* Table header styling */
     table th {
       text-align: center;
       font-weight: bold;
@@ -232,94 +294,139 @@
   </style>
 </head>
 <body>
-  <!-- Header with Save, Add/Remove Card buttons, and New Tab -->
+  <!-- Background Container (for image/video backgrounds) -->
+  <div id="backgroundContainer">
+    <img id="backgroundImage" alt="Background Image">
+    <!-- Video element is created dynamically by JS -->
+  </div>
+  
+  <!-- Header: Background Menu inserted to the left of the existing tab-bar buttons -->
   <div id="tab-bar">
-    <button id="save-button" onclick="saveState()">Save</button>
+    <!-- Background Menu -->
+    <div id="background-menu">
+      <div class="header-title">BG</div>
+      <div class="background-controls">
+        <select id="backgroundSelect">
+          <option value="">🚫 None</option>
+          <option value="@@@custom">𝗖𝘂𝘀𝘁𝗼𝗺</option>
+          <option value="https://user-uploads.perchance.org/file/a7732352677934ad3ac0e98e577efb56.mp4">🧺 Afternoon Marketplace</option>
+          <option value="https://user-uploads.perchance.org/file/404076e6bb950071724c709956a1ca7c.mp4">🏙 Solarpunk City</option>
+          <option value="https://user-uploads.perchance.org/file/aefae58a512bbf5fa05547eabf6c9582.mp4">🌅 Ocean View</option>
+          <option value="https://user-uploads.perchance.org/file/e56f5778f83d80dc966ca91a3d050ea4.mp4">🌾 Cute Farmhouse</option>
+          <option value="https://user-uploads.perchance.org/file/37a72fc18e9b95c5b8580b8297a2ea81.mp4">🧸 Cosy Room</option>
+          <option value="https://user-uploads.perchance.org/file/0ec7852db236b07de5f71798103d1ba7.mp4">🛏️ Dormitory</option>
+          <option value="https://user-uploads.perchance.org/file/48b3222ec4e8907dcc3eae2484d2d456.mp4">☀️ Sunlit Cabin</option>
+          <option value="https://user-uploads.perchance.org/file/3fbf15f79e54fde4072aa9698fa3de42.webm">🏊 Floating on Back</option>
+          <option value="https://user-uploads.perchance.org/file/a32ddbf40f956968436f9f613ef3fd06.mp4">🏚 Abandoned City</option>
+          <option value="https://user-uploads.perchance.org/file/48dd46475cf498a29b4b84f0b2e998f2.mp4">🚊 Abandoned Station</option>
+          <option value="https://user-uploads.perchance.org/file/fee29b9182cdf73e84d90227df424823.mp4">🏕️ Forest Campsite</option>
+          <option value="https://user-uploads.perchance.org/file/59d5fef2a68606ceec850252d5dfeb3d.webm">🏛️ Sinking Ruins Forest</option>
+          <option value="https://user-uploads.perchance.org/file/aa7e072933e66c92f485aba23520ae17.mp4">❄️ Cute Snowy Forest</option>
+          <option value="https://user-uploads.perchance.org/file/b1c9793539f3dfac5718856bf684aadc.mp4">🗡️ Zelda</option>
+          <option value="https://user-uploads.perchance.org/file/87a33181d41894c7a92ac24fca3ea3fd.mp4">🏔️ Wilderness Snow</option>
+          <option value="https://user-uploads.perchance.org/file/f4c8f17b576b4b2227c3f5291a9bee90.mp4">🍂 Japanese Autumn</option>
+          <option value="https://user-uploads.perchance.org/file/4e059e5ceaf5d9d8b7cce44f5a7b5f23.webm">🌾 Grassy Hillside Village</option>
+          <option value="https://user-uploads.perchance.org/file/d313697907717f2320f4bb715c6aa98e.webm">🌃 Cyberpunk City</option>
+          <option value="https://user-uploads.perchance.org/file/54c47d79c55f56f02d63aeaef61bc42e.mp4">🌃 Sleepy Cyberpunk</option>
+          <option value="https://user-uploads.perchance.org/file/f2d05fd62257734d6d4a2bf6088b1785.mp4">🌃 Cyberpunk Cafe</option>
+          <option value="https://user-uploads.perchance.org/file/21a9add7735340351ae6094a5ab1bb05.mp4">🌆 Dusk Silhouette</option>
+          <option value="https://user-uploads.perchance.org/file/349b18e56ff9ac3d22142b232acc6f8e.webm">🌆 Neon Alleyway</option>
+          <option value="https://user-uploads.perchance.org/file/cca1e8143714e517e79eaf19739df9fd.mp4">🗻 Fuji Village</option>
+          <option value="https://user-uploads.perchance.org/file/80a1975a069a6cb7b0b3a058bb7a8d6c.mp4">⛩️ Portal Gate</option>
+        </select>
+        <input type="text" id="customBackgroundInput" placeholder="Enter URL to image or video">
+      </div>
+    </div>
+    <!-- Existing Tab-Bar Buttons -->
+    <button id="save-button" onclick="saveState()">💾 Save</button>
     <button id="add-card-header" onclick="addCard()">Add Card</button>
     <button id="remove-card-header" onclick="removeLastCard()">Remove Last Card</button>
     <button id="new-tab">New Tab</button>
     <div id="tabs"></div>
   </div>
+  
+  <!-- Canvas container for tabs/cards remains unchanged -->
   <div id="canvas-container" style="flex:1;position:relative;"></div>
-
+  
+  <!-- Original Script for tabs/cards, state management, etc. -->
   <script>
     // Global variables
     let currentTab = null;
     let cardCount = 0;
     let draggedCard = null;
-
+    
     const tabs = document.getElementById('tabs');
     const canvasContainer = document.getElementById('canvas-container');
-
+    
     const themes = [
       {name: "High Fantasy", primary: "#fff", secondary: "#fff"},
       {name: "Dark Fantasy", primary: "#000", secondary: "#000"},
       {name: "Mystic Fog", primary: "#808080", secondary: "#c0c0c0"},
-        {name: "Ghostbound", primary: "#cfd9e9", secondary: "#586175"},
-{name: "Rustic Copper", primary: "#B87333", secondary: "#8B4513"},
+      {name: "Ghostbound", primary: "#cfd9e9", secondary: "#586175"},
+      {name: "Rustic Copper", primary: "#B87333", secondary: "#8B4513"},
       {name: "Dragon's Blood", primary: "#8b0000", secondary: "#ff4d4d"},
       {name: "Ruby Radiance", primary: "#ff0000", secondary: "#ffb3b3"},
-	{name: "Infernal Warden", primary: "#731717", secondary: "#e85a3b"},
-	{name: "Valiant Soul", primary: "#E5F6ED", secondary: "#F25C5C"},
-	{name: "Draconic Brood", primary: "#912121", secondary: "#f0c13d"},
+      {name: "Infernal Warden", primary: "#731717", secondary: "#e85a3b"},
+      {name: "Valiant Soul", primary: "#E5F6ED", secondary: "#F25C5C"},
+      {name: "Draconic Brood", primary: "#912121", secondary: "#f0c13d"},
       {name: "Sunfire Blaze", primary: "#ff8c00", secondary: "#ffe0b2"},
       {name: "Golden Dawn", primary: "#ffd700", secondary: "#fffacd"},
-{name: "Electric Lime", primary: "#CCFF00", secondary: "#99CC00"},
-{name: "Jade Forest", primary: "#2E8B57", secondary: "#98FB98"},
+      {name: "Electric Lime", primary: "#CCFF00", secondary: "#99CC00"},
+      {name: "Jade Forest", primary: "#2E8B57", secondary: "#98FB98"},
       {name: "Enchanted Forest", primary: "#0B3D0B", secondary: "#a8d5ba"},
       {name: "Emerald Dream", primary: "#50c878", secondary: "#b7e1cd"},
-	{name: "Swamp Beast", primary: "#3b4d3a", secondary: "#7d9d68"},
-	{name: "Necrotic Sovereign", primary: "#3e3a39", secondary: "#94a27c"},
-{name: "Deep Horizon", primary: "#2F4F4F", secondary: "#708090"},
-	{name: "Ice Revenant", primary: "#c0e8f9", secondary: "#4d7b94"},
-	{name: "Celestial Moon", primary: "#fff", secondary: "#a8c0ff"},
-	{name: "Faery Magic", primary: "#ECECFB", secondary: "#C0E8F9"},
+      {name: "Swamp Beast", primary: "#3b4d3a", secondary: "#7d9d68"},
+      {name: "Necrotic Sovereign", primary: "#3e3a39", secondary: "#94a27c"},
+      {name: "Deep Horizon", primary: "#2F4F4F", secondary: "#708090"},
+      {name: "Ice Revenant", primary: "#c0e8f9", secondary: "#4d7b94"},
+      {name: "Celestial Moon", primary: "#fff", secondary: "#a8c0ff"},
+      {name: "Faery Magic", primary: "#ECECFB", secondary: "#C0E8F9"},
       {name: "Frost Crystal", primary: "#00ced1", secondary: "#b2ffff"},
-{name: "Arctic Ice", primary: "#E0F7FA", secondary: "#00ACC1"},
-{name: "Vibrant Teal", primary: "#008080", secondary: "#00FFFF"},
+      {name: "Arctic Ice", primary: "#E0F7FA", secondary: "#00ACC1"},
+      {name: "Vibrant Teal", primary: "#008080", secondary: "#00FFFF"},
       {name: "Oceanic Depths", primary: "#0000cd", secondary: "#89cff0"},
-	{name: "Stormcaller Djinn", primary: "#a6d5f7", secondary: "#295f87"},
-{name: "Midnight Orchid", primary: "#330066", secondary: "#9933FF"},
+      {name: "Stormcaller Djinn", primary: "#a6d5f7", secondary: "#295f87"},
+      {name: "Midnight Orchid", primary: "#330066", secondary: "#9933FF"},
       {name: "Twilight Violet", primary: "#8a2be2", secondary: "#d3a4ff"},
       {name: "Mystic Amethyst", primary: "#800080", secondary: "#e0aaff"},
-	{name: "Abyssal Horror", primary: "#1e1b2e", secondary: "#6e2f8d"},
-	{name: "Shadow Realm", primary: "#1B0A2A", secondary: "#B39DDB"},
-        {name: "Herbal Tincture", primary: "#D8E3C4", secondary: "#e4ddc4"},
+      {name: "Abyssal Horror", primary: "#1e1b2e", secondary: "#6e2f8d"},
+      {name: "Shadow Realm", primary: "#1B0A2A", secondary: "#B39DDB"},
+      {name: "Herbal Tincture", primary: "#D8E3C4", secondary: "#e4ddc4"},
       {name: "Soft Tunic", primary: "#c4b799", secondary: "#f4f0d9"},
-{name: "Cosmic Latte", primary: "#FFF8E7", secondary: "#E0C097"},
+      {name: "Cosmic Latte", primary: "#FFF8E7", secondary: "#E0C097"},
       {name: "Living Earth", primary: "#5C4033", secondary: "#E6BE8A"},
-      {name: "Cryptic Scroll", primary: "#f4f0d9", secondary: "#a18973"},     
+      {name: "Cryptic Scroll", primary: "#f4f0d9", secondary: "#a18973"},
       {name: "Clockwork Golem", primary: "#d1bfa7", secondary: "#665e4d"},
       {name: "Fungal Colossus", primary: "#503D2E", secondary: "#5d5a4b"},
       {name: "Obsidian Stalker", primary: "#1a1a1a", secondary: "#4d4742"},
-{name: "Solar Flare", primary: "#FF7F00", secondary: "#007FFF"},
-{name: "Emerald Ruby", primary: "#009B77", secondary: "#FF6F61"},
-{name: "Royal Velvet", primary: "#663399", secondary: "#FFD700"},
-{name: "Crimson Ice", primary: "#DC143C", secondary: "#00CED1"},
-{name: "Violet Surge", primary: "#9400D3", secondary: "#ADFF2F"},
-{name: "Tropical Tide", primary: "#FF6347", secondary: "#4682B4"},
-{name: "Mystic Maroon", primary: "#800000", secondary: "#00FF7F"},
-{name: "Deep Sea", primary: "#000080", secondary: "#FFFF00"},
-{name: "Peachy Keen", primary: "#FFDAB9", secondary: "#6495ED"},
-{name: "Autumn Grove", primary: "#D2691E", secondary: "#87CEEB"},
-{name: "Electric Orchid", primary: "#DA70D6", secondary: "#98FB98"},
-{name: "Golden Frost", primary: "#FFD700", secondary: "#00FFFF"},
-{name: "Midnight Blossom", primary: "#191970", secondary: "#FF69B4"},
+      {name: "Solar Flare", primary: "#FF7F00", secondary: "#007FFF"},
+      {name: "Emerald Ruby", primary: "#009B77", secondary: "#FF6F61"},
+      {name: "Royal Velvet", primary: "#663399", secondary: "#FFD700"},
+      {name: "Crimson Ice", primary: "#DC143C", secondary: "#00CED1"},
+      {name: "Violet Surge", primary: "#9400D3", secondary: "#ADFF2F"},
+      {name: "Tropical Tide", primary: "#FF6347", secondary: "#4682B4"},
+      {name: "Mystic Maroon", primary: "#800000", secondary: "#00FF7F"},
+      {name: "Deep Sea", primary: "#000080", secondary: "#FFFF00"},
+      {name: "Peachy Keen", primary: "#FFDAB9", secondary: "#6495ED"},
+      {name: "Autumn Grove", primary: "#D2691E", secondary: "#87CEEB"},
+      {name: "Electric Orchid", primary: "#DA70D6", secondary: "#98FB98"},
+      {name: "Golden Frost", primary: "#FFD700", secondary: "#00FFFF"},
+      {name: "Midnight Blossom", primary: "#191970", secondary: "#FF69B4"},
       {name: "Utimate Power", primary: "#FF3D7F", secondary: "#FF9E9D"}
     ];
-
+    
     // --- TAB MANAGEMENT ---
     function saveTabs() {
       const allTabs = [...tabs.children].map(btn => btn.dataset.name);
       localStorage.setItem('dmTabs', JSON.stringify(allTabs));
     }
-
+    
     function loadTabs() {
       const saved = JSON.parse(localStorage.getItem('dmTabs') || '["Default"]');
       saved.forEach(name => createTab(name));
       switchTab(saved[0]);
     }
-
+    
     function createTab(name) {
       if (document.querySelector(`[data-name="${name}"]`)) return;
       const btn = document.createElement('button');
@@ -327,9 +434,7 @@
       btn.dataset.name = name;
       btn.draggable = true;
       btn.innerHTML = `${name} <span class="close-tab" onclick="deleteTab(event, '${name}')">×</span>`;
-      // Single click to switch tabs.
       btn.onclick = () => switchTab(name);
-      // Double-click to rename.
       btn.ondblclick = (e) => {
         e.stopPropagation();
         const input = document.createElement('input');
@@ -346,7 +451,6 @@
         btn.appendChild(input);
         input.focus();
       };
-      // Drag events for tab reordering.
       btn.addEventListener('dragstart', (e) => {
         e.dataTransfer.setData("text/plain", btn.dataset.name);
         btn.classList.add('dragging');
@@ -364,23 +468,19 @@
         reorderTabs(draggedName, btn.dataset.name);
       });
       tabs.appendChild(btn);
-
-      // Create canvas wrapper for this tab.
+    
       const wrapper = document.createElement('div');
       wrapper.id = 'wrap-' + name;
       wrapper.className = 'canvas-wrapper';
       wrapper.innerHTML = `
-        <div class="canvas-controls">
-          <!-- Controls moved to header -->
-        </div>
+        <div class="canvas-controls"></div>
         <div id="canvas-${name}" class="canvas"></div>`;
       canvasContainer.appendChild(wrapper);
       
-      // Load any saved cards for this tab.
       loadState(name);
       saveTabs();
     }
-
+    
     function deleteTab(e, name) {
       e.stopPropagation();
       if (!confirm(`Delete tab "${name}"?`)) return;
@@ -391,14 +491,13 @@
       const first = tabs.querySelector('.tab-button');
       if (first) switchTab(first.dataset.name);
     }
-
+    
     function switchTab(name) {
       currentTab = name;
       document.querySelectorAll('.tab-button').forEach(b => b.classList.toggle('active', b.dataset.name === name));
       document.querySelectorAll('.canvas-wrapper').forEach(w => w.classList.toggle('active', w.id === 'wrap-' + name));
     }
-
-    // Rename a tab and update its corresponding canvas and storage.
+    
     function renameTab(oldName, newName) {
       if (oldName === newName) {
         const btn = document.querySelector(`[data-name="${oldName}"]`);
@@ -410,7 +509,7 @@
       const btn = document.querySelector(`[data-name="${oldName}"]`);
       const wrapper = document.getElementById('wrap-' + oldName);
       if (!btn || !wrapper) return;
-
+    
       btn.dataset.name = newName;
       btn.innerHTML = `${newName} <span class="close-tab" onclick="deleteTab(event, '${newName}')">×</span>`;
       btn.onclick = () => switchTab(newName);
@@ -430,16 +529,16 @@
         btn.appendChild(input);
         input.focus();
       };
-
+    
       wrapper.id = 'wrap-' + newName;
       const innerCanvas = wrapper.querySelector('.canvas');
       innerCanvas.id = 'canvas-' + newName;
-
+    
       const tabsData = JSON.parse(localStorage.getItem('dmTabs') || '[]');
       const index = tabsData.indexOf(oldName);
       if (index !== -1) tabsData[index] = newName;
       localStorage.setItem('dmTabs', JSON.stringify(tabsData));
-
+    
       const data = localStorage.getItem('dmCards_' + oldName);
       if (data) {
         localStorage.setItem('dmCards_' + newName, data);
@@ -447,8 +546,7 @@
       }
       if (currentTab === oldName) currentTab = newName;
     }
-
-    // Reorder tabs based on drag-and-drop.
+    
     function reorderTabs(draggedName, targetName) {
       const allTabs = Array.from(tabs.children);
       const draggedEl = allTabs.find(el => el.dataset.name === draggedName);
@@ -459,8 +557,7 @@
       const newOrder = Array.from(tabs.children).map(el => el.dataset.name);
       localStorage.setItem('dmTabs', JSON.stringify(newOrder));
     }
-
-    // --- NEW TAB EVENT BINDING ---
+    
     window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('new-tab').onclick = () => {
         const name = prompt('Enter tab name:');
@@ -471,9 +568,8 @@
       };
       loadTabs();
     });
-
-    // --- CARD MANAGEMENT ---
-    // Update form elements before saving: update attributes to reflect current field values.
+    
+    // --- CARD MANAGEMENT FUNCTIONS ---
     function updateFormElements(container) {
       container.querySelectorAll('input').forEach(el => {
         el.setAttribute('value', el.value);
@@ -482,8 +578,7 @@
         el.textContent = el.value;
       });
     }
-
-    // Create a new card and attach event listeners.
+    
     function addCard(data = null, pos = null) {
       if (!currentTab) return;
       const idx = cardCount++;
@@ -528,15 +623,12 @@
         canvas.insertBefore(card, canvas.children[pos]);
       }
       addDragAndDrop(card);
-      // Attach event listeners:
-      // For math inputs, use onblur with evaluateMath.
       card.querySelectorAll('.math-input').forEach(input => {
         input.onblur = () => evaluateMath(input);
         input.setAttribute("ondragstart", "dragCell(event)");
         input.setAttribute("ondrop", "dropCell(event)");
         input.setAttribute("ondragover", "allowDrop(event)");
       });
-      // For non-math inputs and textareas, use oninput.
       card.querySelectorAll('input:not(.math-input), textarea, select').forEach(el => {
         el.oninput = () => saveState();
       });
@@ -549,19 +641,19 @@
       saveState();
       return card;
     }
-
+    
     function removeCard(btn) {
       btn.closest('.card').remove();
       saveState();
     }
-
+    
     function removeLastCard() {
       const canvas = document.getElementById(`canvas-${currentTab}`);
       if (!canvas) return;
       if (canvas.lastChild) canvas.removeChild(canvas.lastChild);
       saveState();
     }
-
+    
     function resetCard(btn) {
       const oldCard = btn.closest('.card');
       const canvas = oldCard.parentElement;
@@ -570,21 +662,20 @@
       addCard(null, pos);
       saveState();
     }
-
+    
     function resizeCard(btn) {
       const c = btn.closest('.card');
       c.style.width = '';
       c.style.height = '';
     }
-
+    
     function changeCell(btn, delta) {
       const inp = btn.closest('.cell-wrapper').querySelector('input');
       let v = parseInt(inp.value) || 0;
       inp.value = Math.max(0, v + delta);
       saveState();
     }
-
-    // Generate Stats with dice breakdown tooltip.
+    
     function generateStats(btn) {
       const card = btn.closest('.card');
       card.querySelectorAll('details:nth-of-type(1) input').forEach(i => {
@@ -595,7 +686,7 @@
       });
       saveState();
     }
-
+    
     function dropCell(e) {
       e.preventDefault();
       const src = document.getElementById(e.dataTransfer.getData('id'));
@@ -610,26 +701,22 @@
         saveState();
       }
     }
-
+    
     function dragCell(e) {
       e.dataTransfer.setData('text', e.target.value);
       e.dataTransfer.setData('id', e.target.id);
     }
-
+    
     function allowDrop(e) {
       e.preventDefault();
     }
-
-    // Evaluate math expressions using Math.js,
-    // set the result to the input, then save state.
+    
     function evaluateMath(input) {
       try {
-        console.log("Evaluating:", input.value);
         if (input.value.trim() === '') {
           input.value = 0;
         } else {
           const result = math.evaluate(input.value);
-          console.log("Result:", result);
           input.value = result;
         }
       } catch (error) {
@@ -638,7 +725,7 @@
       }
       saveState();
     }
-
+    
     function addDragAndDrop(card) {
       card.addEventListener('dragstart', e => {
         draggedCard = card;
@@ -657,8 +744,7 @@
         }
       });
     }
-
-    // --- Section and Theme Helpers ---
+    
     function makeSection(title, idx, headers, count, open = false, data = null) {
       return `
         <details ${open ? 'open' : ''}>
@@ -671,7 +757,7 @@
           </div>
         </details>`;
     }
-
+    
     function makeCell(idx, section, i, data) {
       const id = `${section}-${idx}-${i}`;
       const val = data?.[id] ?? 0;
@@ -688,7 +774,7 @@
           </div>
         </td>`;
     }
-
+    
     function makeSpellSlots(idx, data) {
       const labels = ['S', '1ˢᵗ', '2ⁿᵈ', '3ʳᵈ', '4ᵗʰ', '5ᵗʰ', '6ᵗʰ', '7ᵗʰ', '8ᵗʰ', '9ᵗʰ'];
       return `
@@ -704,8 +790,7 @@
           </div>
         </details>`;
     }
-
-    // Update primary theme and update close/± button colors.
+    
     function updatePrimaryTheme(sel) {
       const card = sel.closest('.card');
       const idx = sel.selectedIndex;
@@ -720,8 +805,7 @@
         btn.style.color = contrastColor(theme.primary);
       });
     }
-
-    // Update secondary theme and update button/input colors.
+    
     function updateSecondaryTheme(sel) {
       const card = sel.closest('.card');
       const color = sel.value || '';
@@ -731,7 +815,7 @@
         el.style.color = contrastColor(color);
       });
     }
-
+    
     function cycleTheme(btn) {
       const card = btn.closest('.card');
       const p = card.querySelector('select:first-of-type');
@@ -741,27 +825,25 @@
       updatePrimaryTheme(p);
       updateSecondaryTheme(s);
     }
-
+    
     function contrastColor(hex) {
       hex = hex.replace(/^#/, '');
       if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
       const [r, g, b] = [0, 2, 4].map(i => parseInt(hex.substr(i, 2), 16));
       return (r * 299 + g * 587 + b * 114) / 1000 < 128 ? '#fff' : '#000';
     }
-
-    // --- STATE MANAGEMENT (PER TAB) ---
+    
     function saveState() {
       if (!currentTab) return;
       const canvas = document.getElementById('canvas-' + currentTab);
       if (canvas) {
-        // Update all form elements' attributes before saving
         canvas.querySelectorAll('.card').forEach(card => {
           updateFormElements(card);
         });
         localStorage.setItem('dmCards_' + currentTab, canvas.innerHTML);
       }
     }
-
+    
     function loadState(tabName) {
       const saved = localStorage.getItem('dmCards_' + tabName);
       if (saved) {
@@ -769,45 +851,214 @@
         canvas.innerHTML = saved;
         canvas.querySelectorAll('.card').forEach(card => {
           addDragAndDrop(card);
-          // Reattach the math-input onblur using evaluateMath…
           card.querySelectorAll('.math-input').forEach(input => {
             input.onblur = () => evaluateMath(input);
             input.setAttribute("ondragstart", "dragCell(event)");
             input.setAttribute("ondrop", "dropCell(event)");
             input.setAttribute("ondragover", "allowDrop(event)");
           });
-          // …and attach generic onblur (or oninput) for non-math inputs.
           card.querySelectorAll('input:not(.math-input), textarea, select').forEach(el => {
             el.onblur = () => saveState();
           });
         });
       }
     }
-
-    function updateFormElements(container) {
-      container.querySelectorAll('input').forEach(el => {
-        el.setAttribute('value', el.value);
+    
+    const saveButton = document.getElementById("save-button");
+    saveButton.addEventListener("click", () => {
+      saveButton.classList.add("clicked");
+      const originalText = "💾 Save";
+      saveButton.innerHTML = `${originalText}<span class="checkmark">✅</span>`;
+      setTimeout(() => {
+        saveButton.classList.remove("clicked");
+        saveButton.innerHTML = originalText;
+      }, 1500);
+    });
+  </script>
+  
+  <!-- Background Selector Script -->
+  <script>
+    // Create crossfade video element for background videos
+    function createCrossfadePseudoVideoElement(opts = {}) {
+      const container = document.createElement('div');
+      const subContainer = document.createElement('div');
+      const video1 = document.createElement('video');
+      const video2 = document.createElement('video');
+      const fadeDuration = opts.fadeDuration ?? 1000;
+    
+      container.append(subContainer);
+      subContainer.style.cssText = "position:relative; width:100%; height:100%;";
+    
+      [video1, video2].forEach(video => {
+        video.style.cssText = `pointer-events:none; position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; transition:opacity ${fadeDuration}ms ease-in-out;`;
+        video.muted = true;
+        video.autoplay = true;
+        video.setAttribute("playsinline", "");
+        video.setAttribute("disablepictureinpicture", "");
+        video.setAttribute("loop", "");
+        subContainer.appendChild(video);
       });
-      container.querySelectorAll('textarea').forEach(el => {
-        el.textContent = el.value;
+      video2.style.opacity = '0';
+    
+      let activeVideo = video1;
+      let waitingVideo = video2;
+      let isTransitioning = false;
+      let currentSrc = "";
+    
+      function switchVideos() {
+        if (isTransitioning) return;
+        isTransitioning = true;
+        waitingVideo.currentTime = 0;
+        waitingVideo.play().catch(e => console.error("Video play error:", e));
+        waitingVideo.style.opacity = '1';
+        activeVideo.style.opacity = '0';
+        let prevActiveVideo = activeVideo;
+        setTimeout(() => {
+          prevActiveVideo.pause();
+          prevActiveVideo.currentTime = 0;
+          isTransitioning = false;
+        }, fadeDuration);
+        activeVideo = waitingVideo;
+        waitingVideo = prevActiveVideo;
+      }
+    
+      function onTimeUpdate() {
+        const timeLeft = activeVideo.duration - activeVideo.currentTime;
+        if (timeLeft <= (fadeDuration / 1000)) {
+          let prevActiveVideo = activeVideo;
+          prevActiveVideo.removeEventListener('timeupdate', onTimeUpdate);
+          switchVideos();
+          activeVideo.addEventListener('timeupdate', onTimeUpdate);
+        }
+      }
+    
+      Object.defineProperties(container, {
+        src: {
+          get: () => currentSrc,
+          set: (newSrc) => {
+            currentSrc = newSrc;
+            video1.src = video2.src = newSrc;
+          },
+        },
+        paused: {
+          get: () => activeVideo.paused,
+        },
       });
+    
+      container.play = () => {
+        activeVideo.addEventListener('timeupdate', onTimeUpdate);
+        return activeVideo.play().catch(e => {
+          console.error("Error playing video:", e);
+          document.addEventListener('click', function playOnce() {
+            activeVideo.play().catch(console.error);
+            document.removeEventListener('click', playOnce);
+          });
+        });
+      };
+      
+      container.pause = () => {
+        video1.removeEventListener('timeupdate', onTimeUpdate);
+        video2.removeEventListener('timeupdate', onTimeUpdate);
+        video1.pause();
+        video2.pause();
+      };
+      
+      return container;
     }
-const saveButton = document.getElementById("save-button");
-
-saveButton.addEventListener("click", () => {
-  saveButton.classList.add("clicked");
-
-  // Change text to include checkmark
-  const originalText = "💾 Save";
-  saveButton.innerHTML = `${originalText}<span class="checkmark">✅</span>`;
-
-  // Optional: Reset after 1.5 seconds
-  setTimeout(() => {
-    saveButton.classList.remove("clicked");
-    saveButton.innerHTML = originalText;
-  }, 1500);
-});
-
+    
+    // Background elements
+    const backgroundContainer = document.getElementById('backgroundContainer');
+    const backgroundImage = document.getElementById('backgroundImage');
+    const backgroundVideoEl = createCrossfadePseudoVideoElement({});
+    backgroundVideoEl.id = "backgroundVideoEl";
+    backgroundVideoEl.style.cssText = "position:absolute; top:0; left:0; width:100%; height:100%; display:none;";
+    backgroundContainer.appendChild(backgroundVideoEl);
+    
+    const backgroundSelect = document.getElementById('backgroundSelect');
+    const customBackgroundInput = document.getElementById('customBackgroundInput');
+    
+    // Initialize background from localStorage if available
+    if (localStorage.getItem('backgroundUrl')) {
+      const savedUrl = localStorage.getItem('backgroundUrl');
+      for (let i = 0; i < backgroundSelect.options.length; i++) {
+        if (backgroundSelect.options[i].value === savedUrl) {
+          backgroundSelect.selectedIndex = i;
+          break;
+        }
+      }
+      if (backgroundSelect.value !== savedUrl && savedUrl !== "") {
+        backgroundSelect.value = "@@@custom";
+        customBackgroundInput.value = savedUrl;
+        customBackgroundInput.style.display = "block";
+      }
+      updateBackground(savedUrl);
+    }
+    
+    backgroundSelect.addEventListener('change', function() {
+      const selectedValue = this.value;
+      if (selectedValue === "@@@custom") {
+        customBackgroundInput.style.display = "block";
+        if (customBackgroundInput.value) {
+          updateBackground(customBackgroundInput.value);
+        }
+      } else {
+        customBackgroundInput.style.display = "none";
+        updateBackground(selectedValue);
+      }
+    });
+    
+    customBackgroundInput.addEventListener('input', function() {
+      updateBackground(this.value);
+    });
+    
+    function updateBackground(url) {
+      localStorage.setItem('backgroundUrl', url);
+      if (!url) {
+        backgroundImage.style.display = 'none';
+        backgroundVideoEl.style.display = 'none';
+        backgroundVideoEl.src = '';
+        backgroundVideoEl.pause();
+        return;
+      }
+      if (/\.(mp4|webm|mkv|mov)$/i.test(url.split('?')[0])) {
+        backgroundImage.style.display = 'none';
+        backgroundVideoEl.style.display = 'block';
+        backgroundVideoEl.src = url;
+        const playPromise = backgroundVideoEl.play();
+        if (playPromise) {
+          playPromise.catch(err => {
+            console.log("Video autoplay was prevented. Waiting for user interaction:", err);
+            const clickToPlay = function() {
+              backgroundVideoEl.play().catch(console.error);
+              document.removeEventListener('click', clickToPlay);
+            };
+            document.addEventListener('click', clickToPlay);
+          });
+        }
+      } else {
+        backgroundVideoEl.style.display = 'none';
+        backgroundVideoEl.src = '';
+        backgroundVideoEl.pause();
+        backgroundImage.src = url;
+        backgroundImage.style.display = 'block';
+      }
+    }
+    
+    let userInteracted = false;
+    function onUserInteraction() {
+      if (!userInteracted) {
+        userInteracted = true;
+        if (backgroundVideoEl.style.display === 'block') {
+          backgroundVideoEl.play().catch(console.error);
+        }
+        document.removeEventListener('click', onUserInteraction);
+        document.removeEventListener('touchstart', onUserInteraction);
+        document.removeEventListener('keydown', onUserInteraction);
+      }
+    }
+    document.addEventListener('click', onUserInteraction);
+    document.addEventListener('touchstart', onUserInteraction);
+    document.addEventListener('keydown', onUserInteraction);
   </script>
 </body>
 </html>
